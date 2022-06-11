@@ -1,0 +1,28 @@
+{
+  "name": "vaccine-supply-chain",
+  "version": "1.0.0",
+  "description": "Vaccine supply chain with blockchain",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "ganache": "ganache-cli -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\"",
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asandoval2313/vaccine-supply-chain.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asandoval2313/vaccine-supply-chain/issues"
+  },
+  "homepage": "https://github.com/asandoval2313/vaccine-supply-chain#readme",
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "@truffle/hdwallet-provider": "^2.0.9",
+    "web3": "^1.7.3"
+  }
+}
