@@ -60,7 +60,7 @@ contract ColdChain {
     mapping(uint => Certificate) public certificates; 
     mapping(address => Entity) public entities; 
 
-    event AddEntity(address entitytId, string entityMode);
+    event AddEntity(address entityId, string entityMode);
     event AddVaccineBatch(uint vaccineBatchId, address indexed manufacturer);
     event IssueCertificate(address indexed issuer, address indexed prover, uint certificateId);
 
@@ -104,7 +104,7 @@ contract ColdChain {
 
     function issueCertificate(
         address _issuer, address _prover, string memory _status,
-        uint vaccineBatchId, bytes memory signature) public returns(uint) {
+        bytes memory signature) public returns(uint) {
             
             Entity memory issuer = entities[_issuer];
             require(issuer.mode == Mode.ISSUER);
