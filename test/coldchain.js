@@ -76,7 +76,7 @@ contract('ColdChain', (accounts) => {
         entityId: id,
         entityMode: mode
       });
-      
+
 
       const retrievedEntity = await this.coldChainInstance.entities.call(id);
       assert.equal(id, retrievedEntity.id, "mismatched ids");
@@ -98,7 +98,7 @@ contract('ColdChain', (accounts) => {
         vaccineBatchId: String(i),
         manufacturer: manufacturer
       });
-      
+
 
       const retrievedVaccineBatch = await this.coldChainInstance.vaccineBatches.call(i);
       assert.equal(i, retrievedVaccineBatch.id);
@@ -109,26 +109,61 @@ contract('ColdChain', (accounts) => {
   });
 
   it('should sign a message and store as a certificate from the issuer to the prover', async () => {
-    for (let i = 0; i < Object.keys(this.defaultVaccineBatches).length; i++) {
-      const { brand, manufacturer } = this.defaultVaccineBatches[i];
+    const mnemonic = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
+    const providerOrUrl = "http://localhost:8545";
+    const provider = new HDWalletProvider({
+      mnemonic,
+      providerOrUrl
+    });
+    this.web3 = new Web3(provider);
 
-      const result = await this.coldChainInstance.addVaccineBatch(
-        brand,
-        manufacturer,
-        { from: this.owner }
-      );
+    const { inspector, manufacturerA } = this.defaultEntities;
+    const vaccineBatchId = 0;
+    const message = `Inspector (${inspector.id}) has certified vaccine batch #${vaccineBatchId} for manufacturer (${manufacturerA.id})`;
+    const signature = await this.web3.eth.sign(
+      this.web3.utils.keccak256(message),
+      inspector.id
+    );
 
-      expectEvent(result.receipt, "AddVaccineBatch", {
-        vaccineBatchId: String(i),
-        manufacturer: manufacturer
-      });
-      
+    const result = await this.coldChainInstance.issueCertificate(
+      inspector.id,
+      manufacturerA.id,
+      this.StatusEnums.manufactured.val,
+      signature,
+      { from: this.owner }
+    )
 
-      const retrievedVaccineBatch = await this.coldChainInstance.vaccineBatches.call(i);
-      assert.equal(i, retrievedVaccineBatch.id);
-      assert.equal(brand, retrievedVaccineBatch.brand);
-      assert.equal(manufacturer, retrievedVaccineBatch.manufacturer);
-      assert.equal(undefined, retrievedVaccineBatch.certificateIds);
-    }
+    expectEvent(result.receipt, "IssueCertificate", {
+      issuer: inspector.id,
+      prover: manufacturerA.id,
+      certificateId: new BN(0)
+    });
+
+    const retrievedCertificate = await this.coldChainInstance.certificates.call(0);
+
+    assert.equal(retrievedCertificate.id, 0);
+    assert.equal(retrievedCertificate.issuer["id"], inspector.id);
+    assert.equal(retrievedCertificate.prover["id"], manufacturerA.id);
+    assert.equal(retrievedCertificate.signature, signature);
+    assert.equal(retrievedCertificate.status, this.StatusEnums.manufactured.pos.toString());
+
+  });
+
+  it('should verify that the certificate signature matches the issuer', async () => {
+    const { inspector, manufacturerA } = this.defaultEntities;
+    const vaccineBatchId = 0;
+    const message = `Inspector (${inspector.id}) has certified vaccine batch #${vaccineBatchId} for manufacturer (${manufacturerA.id})`;
+
+    const retrievedCertificate = await this.coldChainInstance.certificates.call(0);
+
+    const signerMatches = await this.coldChainInstance.isMatchingSignature(
+      this.web3.utils.keccak256(message),
+      certificate.id,
+      inspector.id, 
+      { from: this.owner }
+    );
+
+    assert.equal(signerMatches, true);
+
   });
 });

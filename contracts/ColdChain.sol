@@ -109,7 +109,7 @@ contract ColdChain {
             Entity memory issuer = entities[_issuer];
             require(issuer.mode == Mode.ISSUER);
 
-            Entity memory prover = entities[_issuer];
+            Entity memory prover = entities[_prover];
             require(prover.mode == Mode.PROVER);
 
             Status status = unmarshalStatus(_status);
