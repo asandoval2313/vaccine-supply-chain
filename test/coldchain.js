@@ -158,8 +158,8 @@ contract('ColdChain', (accounts) => {
 
     const signerMatches = await this.coldChainInstance.isMatchingSignature(
       this.web3.utils.keccak256(message),
-      certificate.id,
-      inspector.id, 
+      retrievedCertificate.id,
+      inspector.id,
       { from: this.owner }
     );
 
