@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
 
-library CryptoSuite {
+library SigLibrary {
     function splitSginature(bytes memory sig) internal pure returns(uint8 v, bytes32 r, bytes32 s) {
         require(sig.length == 65);
 
@@ -16,26 +16,30 @@ library CryptoSuite {
         return(v,r,s);
     }
 
+    // Recovers signer using ecrecover
     function recoverSigner(bytes32 message, bytes memory sig) internal pure returns (address) {
         (uint8 v, bytes32 r, bytes32 s) = splitSginature(sig);
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, message));
 
+        // Ecrecover uses the points defined by r and s to decompile the message signer 
         return ecrecover(prefixedHash, v, r, s);
     }
 }
 
 contract ColdChain {
-
+    
+    // Types of entities
     enum Mode { ISSUER, PROVER, VERIFIER }
+    // Vaccine batch statuses
+    enum Status { MANUFACTURED, DELIVERING_INTERNATIONAL, STORED, DELIVERING_LOCAL, DELIVERED }
+
     struct Entity {
         address id; 
         Mode mode; 
         uint[] certificateIds;
     }
     
-    enum Status { MANUFACTURED, DELIVERING_INTERNATIONAL, STORED, DELIVERING_LOCAL, DELIVERED }
-
     struct Certificate {
         uint id; 
         Entity issuer; 
@@ -73,11 +77,16 @@ contract ColdChain {
     }
 
     function unmarshalMode(string memory _mode) private pure returns(Mode mode){
+        // Unmarshals Mode enum and compares to passed Mode to give entity a role
         bytes32 encodedMode = keccak256(abi.encodePacked(_mode));
         bytes32 encodedMode0 = keccak256(abi.encodePacked("ISSUER"));
         bytes32 encodedMode1 = keccak256(abi.encodePacked("PROVER"));
         bytes32 encodedMode2 = keccak256(abi.encodePacked("VERIFIER"));
 
+        /* 
+        Tried to find way to clean up code with for loop 
+        but was unable to find way to loop over enums.
+        */
         if (encodedMode == encodedMode0) {
             return Mode.ISSUER;
         } 
@@ -155,7 +164,7 @@ contract ColdChain {
         Certificate memory cert = certificates[id];
         require(cert.issuer.id == issuer);
 
-        address recoveredSigner = CryptoSuite.recoverSigner(message, cert.signature);
+        address recoveredSigner = SigLibrary.recoverSigner(message, cert.signature);
 
         return recoveredSigner == cert.issuer.id;
     }
